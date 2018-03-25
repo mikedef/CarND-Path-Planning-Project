@@ -1,6 +1,8 @@
 # CarND-Path-Planning-Project
 ## Michael DeFilippo
 
+![alt text](5+miles-no-crash.png)
+
 #### Please see my [project code](https://github.com/mikedef/CarND-Path-Planning-Project) for any questions regarding implementation.
 ---
 
@@ -96,8 +98,14 @@ A really helpful resource for doing this project and creating smooth trajectorie
 
 ## Project Instructions and Rubric
 
-### Compiles Using CMake
-The code compiles using `cmake`. An additional file was added to my project in `/src`. This is the spline.h file which allows the use of splines instead of polynomials. The use of splines was recomended by the instructors in the QA video. Using a cubic spline helped with determining a smooth path while changing lanes. 
+### Compilation
+#### Compiles Using CMake
+The code compiles using `cmake`. An additional file was added to my project in `/src`. This is the [spline.h](http://kluge.in-chemnitz.de/opensource/spline/) file which allows the use of splines instead of polynomials. The use of splines was recomended by the instructors in the QA video. Using a cubic spline helped with determining a smooth path while changing lanes. 
+
+### Valid Trajectories 
+#### The car is able to drive at least 4.32 miles without incident.
+The top right screen of the simulator shows the current/best miles driven without incident. Incidents include exceeding acceleration/jerk/speed, collision, and driving outside of the lanes. Each incident case is also listed below in more detail.
 
 
-
+### Path-Planning Video
+Please see the project video of my vehicle going around the track and avoiding vehicles [here](https://youtu.be/RRx7Yj0-oqo). 
