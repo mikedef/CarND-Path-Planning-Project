@@ -106,6 +106,26 @@ The code compiles using `cmake`. An additional file was added to my project in `
 #### The car is able to drive at least 4.32 miles without incident.
 The top right screen of the simulator shows the current/best miles driven without incident. Incidents include exceeding acceleration/jerk/speed, collision, and driving outside of the lanes. Each incident case is also listed below in more detail.
 
+I was able to autonomously drive the car in the simulator for over 5 miles with no collisions. See picture at the top of the README file. 
+
+### The car drives according to the speed limit.
+The car was able to drive in accordance to the speed limit. The only time the car would slow down was if there was traffic directly in the cars path, and there was no safe way to move into another lane. 
+
+### Max Acceleration and Jerk are not Exceeded.
+I was able to limit the amount of Jerk and Acceleration experienced by the vehicle by ramping and decelerating the car by less than 5 m/s either up to a max speed, or based off if there was a vehicle within 30 meteres fo the ego vehicle. 
+
+### Car does not have collisions.
+The car did not experience any collisions. 
+
+### The car stays in its lane, except for the time between changing lanes.
+The car stays in it's lane except for lane changes, otherwise the car stays in one of the three lanes on the right side of the road. 
+
+### The car is able to change lanes
+The car is able to change lanes smoothly when there are no other cars in the direct path of the lane that the vehicle is changing into. 
+
+## Reflection
+The path planning project was a very involved project. The project walkthrough and Q&A was extremely helpful and it would have taken many more days to complete the project if this video and sample code was not provide. 
+The simulation provides telemetry and sensor fusion data to work readily work with. Using this data I was able to extract the position of the cars around the ego vehicle and make the appropriate decision based on this data. If a car is within 30 m in front of the ego vehicle I would consider this an obstruction and make a decision. The three decisions to make are one, should the ego vehicle change lane left?  Two, should the ego vehicle change lane right? Or three, should the ego vehicle slow down and stay in the lane. Based on the prediction the code will perform a safe lane change or slow down and stay in the lane untile there is a safe lane change available. The ego vehicle's preference is to always be in the middle lane, then to change lane left, then to change lane right, or lastly to stay in the current lane and slow down. The trajectory is determined using the spline library.   
 
 ### Path-Planning Video
 Please see the project video of my vehicle going around the track and avoiding vehicles [here](https://youtu.be/RRx7Yj0-oqo). 
