@@ -202,13 +202,13 @@ int main() {
   }
 
   // Start in lane 1: mjd
-  int lane = 1; // middle lane
+  //int lane = 1; // middle lane
 
   // have a reference velocity to target: mjd
-  double ref_vel = 0.0; //49.5; // mph
+  //double ref_vel = 0.0; //49.5; // mph
+  bool set_vel = false;
   
-  
-  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&lane, &ref_vel](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -225,7 +225,16 @@ int main() {
         
         string event = j[0].get<string>();
 
-	if (event == "telemetry") {
+	if (set_vel = false) {
+	    // Start in lane 1: mjd
+	    int lane = 1; // middle lane
+	
+	    // have a reference velocity to target: mjd
+	    double ref_vel = 0.0; // mph
+	    set_vel = true;
+	  }
+
+        if (event == "telemetry") {
           // j[1] is the data JSON object
           
         	// Main car's localization Data
@@ -256,153 +265,39 @@ int main() {
 		  car_s = end_path_s;
 		}
 
-		// Checking other cars positions
-		// bool too_close = false;
-		bool car_infront = false;
-		bool car_left = false;
-		bool car_right = false;
+		bool too_close = false;
 
-		// Check all targets
+		// find ref_v to use
 		for(int i=0; i<sensor_fusion.size(); i++) {
-		  //cout << "contacs" << sensor_fusion.size() << endl;
-		  float d = sensor_fusion[i][6]; // car d value
-		  int contact_lane = -1;
-		  // check if the vehicle is in left lane
-		  if(d < 4 && d > 0) { 
-		    contact_lane = 0;
-		  }
-		  // check if the vehicle is in center lane
-		  else if(d < 8 && d > 4 ){
-		    contact_lane = 1;
-		  }
-		  // check if the vehicle is in right lane
-		  else if(d < 12 && d > 8){
-		    contact_lane = 2;
-		  }
-		  if(contact_lane < 0) {
-		    continue;
-		  }
-		  // find the cars speed
-		  double vx = sensor_fusion[i][3];
-		  double vy = sensor_fusion[i][4];
-		  double check_speed = sqrt(vx*vx+vy*vy);
-		  double check_car_s = sensor_fusion[i][5];
+		  // car is in my lane
+		  float d = sensor_fusion[i][6];
+		  // check if the vehicle is in our lane
+		  if(d < (2+4*lane+2) && d > (2+4*lane-2) ){
+		    double vx = sensor_fusion[i][3];
+		    double vy = sensor_fusion[i][4];
+		    double check_speed = sqrt(vx*vx+vy*vy);
+		    double check_car_s = sensor_fusion[i][5];
 
-		  // Estimate the cars s-position after previous traj
-		  check_car_s += ((double)prev_size*0.02*check_speed); // if using prev points can project s value outwards in time
-
-		  //
-		  if (contact_lane == lane) {
-		    car_infront |= check_car_s > car_s && check_car_s - car_s < 30;
-		    //cout << "Car in front" << endl;
-		  }
-		  else if (contact_lane == lane-1) {
-		    car_left |= car_s - 30 < check_car_s && car_s + 30 > check_car_s;
-		    //cout << "car to the left" << endl;
-		  }
-		  else if (contact_lane == lane+1) {
-		    car_right |= car_s - 30 < check_car_s && car_s + 30 > check_car_s;
-		    //cout << "car to the right" << endl;
-		  }
-		  
-		  //if((check_car_s > car_s) && ((check_car_s-car_s) <30)){
-		    // Do some logic here, lower ref velocity so we don't crash into car or flag to change lanes
-		    //ref_vel = 29.5; // mph
-		    // too_close = true;
-
-
-		}
-		  // Behavior
-
-		  /***************
-Drive in center lane unless there is a vehicle in front, try to move left, then try to move right. go back to center when possible. 
-		   *************/
-		  if (car_infront) {
-		    cout << "car in front" << endl;
-		    if(!car_left && lane > 0) {
-		      lane--; // no car left and left lane
-		    }
-		    else if(!car_right && lane != 2) {
-		      lane++; // change right
-		    }
-		    else {
-		      ref_vel -= 0.224; // subtracts about 5 m/s^2 change
-		    }
-		  }
-		  else {
-		    if (lane != 1) { // not in center
-		      if( (lane == 0 && !car_right) ||
-			  (lane == 2 && !car_left) ) {
-			lane = 1; // go to center
-		      }
-		    }
-		    if(ref_vel < 48.5) { // 49.5 goes over speed still
-		      ref_vel += 0.324; //0.224 works but slow
-		    }
-		  }
-		  
-
-		      /*
-		      if (lane == 0) { // Left lane
-			if (car_right) {
-			  continue;  // if car is right of us do nothing
-			}
-			else {
-			  cout << "Change to center" << endl;
-			  lane = 1; // Go to center lane (right)
-			}
-		      }
-		      else if (lane == 1) { // Center lane
-			if (car_right && car_left) {
-			  continue;
-			}
-			else if (car_left && !car_right) {
-			  cout << "car to the left" << endl;
-			  cout << "cheange to right" << endl;
-			  lane = 2; //continue;
-			}
-			else if (car_right && !car_left) {
-			  cout << "car to the right" << endl;
-			  cout << "change to left" << endl;
-			  lane = 0; // go to left lane
-			}
-			else if (!car_right && !car_left) {
-			  cout << "change left" << endl;
-			  lane = 0; // go to left lane
-			}
-			else {
-			  continue;
-			}
-		      }
-		      else if (lane == 2) { // Right lane
-			if (car_left) {
-			  cout << "car to the left" << endl;
-			  continue;
-			}
-			else {
-			  lane = 1; // Go to Center lane
-			  cout << "change to the left" << endl;
-			}
-		      }
-		    }
+		    check_car_s += ((double)prev_size*0.02*check_speed); // if using prev points can project s value outwards in time
 		    
-		    //}
-		    */
-		      
+		    if((check_car_s > car_s) && ((check_car_s-car_s) <30)){
+		      // Do some logic here, lower ref velocity so we don't crash into car or flag to change lanes
+		      //ref_vel = 29.5; // mph
+		      too_close = true;
+		    }
+		  }
+		}
+		cout << "Ref Vel Start" << ref_vel << endl;
 		
-		  
-
-	
-		    //cout << "current lane" << lane << endl;
-		  //if(car_infront) {
-		  //ref_vel -= 0.224; // subtracts about 5 m/s^2 change
-		  //}
-		//else if(ref_vel < 48.5) { // 49.5 goes over speed still
-		//  ref_vel += 0.324; //0.224 works but slow
-
-		//}
+		if(too_close) {
+		  ref_vel -= 0.224; // subtracts about 5 m/s^2 change
+		}
+		else if(ref_vel < 49.5) {
+		  ref_vel += 0.224;
+		  cout << "ref < 49.5" << endl;
+		}
 		
-
+		cout << "ref vel: " << ref_vel << endl;
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
 		// use spline.h instead of polinomial fitting or smothing out the path
 
